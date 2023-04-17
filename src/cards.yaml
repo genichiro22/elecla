@@ -1,0 +1,13 @@
+Lhollmach:
+  name: "Lhollmach of the Strength"
+  type: Creature
+  cost: 4
+  power: 5
+  toughness: 5
+
+Leyghoulle:
+  name: "Leyghoulle of the Forgotten"
+  type: Creature
+  cost: 3
+  power: 1
+  toughness: 6
