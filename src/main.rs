@@ -52,4 +52,30 @@ fn main() {
     };
     println!("{:?}", card1);
     println!("{:?}", card2);
+    let mut player1_deck: Vec<Card> = Vec::new();
+    let mut player2_deck: Vec<Card> = Vec::new();
+    for i in 1..=30 {
+        let j:u32 = i/3 + 1;
+        let c = Card {
+            id: i,
+            card_text: CardText {
+                name: format!("Sample {}", j),
+                cost: j,
+                power: j,
+                toughness: j,
+            }
+        };
+        let d = Card {
+            id: i,
+            card_text: CardText {
+                name: format!("PL2 {}", j),
+                cost: j+1,
+                power: j,
+                toughness: j,
+            }
+        };
+        player1_deck.push(c);
+        player2_deck.push(d);
+    }
+    println!("{:?}", player1_deck);
 }
