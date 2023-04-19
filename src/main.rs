@@ -35,6 +35,25 @@ struct CardText {
     toughness: u32,
 }
 
+impl Player {
+    fn draw(&mut self, n: u32) {
+        let max_n=self.domain.library.len().try_into().unwrap();
+        if 0<n && n<=max_n {
+            for i in 1..=n {
+                let card = self.domain.library.remove(0);
+                self.domain.hand.push(card);
+            }
+        } else if n>max_n {
+            for i in 1..=max_n {
+                let card = self.domain.library.remove(0);
+                self.domain.hand.push(card);
+            }
+        } else {
+            ();
+        }
+    }
+}
+
 fn main() {
     let llmc = CardText {
         name: String::from("Lhollmach of the Strength"),
@@ -50,8 +69,6 @@ fn main() {
         id: 2,
         card_text: llmc.clone(),
     };
-    println!("{:?}", card1);
-    println!("{:?}", card2);
     let mut player1_deck: Vec<Card> = Vec::new();
     let mut player2_deck: Vec<Card> = Vec::new();
     for i in 1..=30 {
@@ -77,5 +94,25 @@ fn main() {
         player1_deck.push(c);
         player2_deck.push(d);
     }
-    println!("{:?}", player1_deck);
+    let mut player1 = Player {
+        life: 13,
+        turn: 3,
+        mana: 5,
+        domain: Domain {
+            library: player1_deck,
+            hand: vec![],
+            field: vec![],
+            graveyard: vec![],
+        },
+    };
+    player1.draw(1);
+    player1.draw(2);
+
+    println!("{:?}", player1);
+    player1.draw(3);
+
+    println!("{:?}", player1);
+    player1.draw(50);
+
+    println!("{:?}", player1);
 }
