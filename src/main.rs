@@ -1,3 +1,6 @@
+use std::io;
+use rand::Rng;
+
 #[derive(Debug)]
 struct Board {
     turn: u32,
@@ -54,6 +57,41 @@ impl Player {
     }
 }
 
+trait Agent {
+    fn get_cast_num(&self) -> u32;
+}
+
+struct Human {
+    player: u32,
+}
+
+impl Agent for Human {
+    fn get_cast_num(&self) -> u32 {
+        let mut input = String::new();
+        println!("Choose a number to cast");
+        io::stdin()
+            .read_line(&mut input)
+            .expect("Failed to read input");
+        let hand_number: u32 = input
+            .trim()
+            .parse()
+            .expect("Failed to parse input as an u32");
+        hand_number
+    }
+}
+
+#[derive(Debug,Clone,Copy)]
+struct RandomAgent {
+    player: u32,
+}
+impl Agent for RandomAgent {
+    fn get_cast_num(&self) -> u32 {
+        let mut rng = rand::thread_rng();
+        let random_u32 = rng.gen::<u32>();
+        random_u32
+    }
+}
+
 fn main() {
     let llmc = CardText {
         name: String::from("Lhollmach of the Strength"),
@@ -106,13 +144,25 @@ fn main() {
         },
     };
     player1.draw(1);
-    player1.draw(2);
+    let mut turn: u32 = 0;
+    let mut current_player: u32 = 1;
+    let agent1 = RandomAgent {
+        player: 1,
+    };
+    let agent2 = RandomAgent {
+        player: 2,
+    };
 
-    println!("{:?}", player1);
-    player1.draw(3);
-
-    println!("{:?}", player1);
-    player1.draw(50);
-
-    println!("{:?}", player1);
+    loop {
+        current_player = 2 - current_player;
+        let agent = match current_player {
+            1 => agent1,
+            2 => agent2,
+            _ => panic!("Invalid value encountered!"),
+        };
+        turn = turn + 1;
+        if turn>10 {
+            break;
+        }
+    }
 }
