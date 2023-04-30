@@ -3,15 +3,16 @@ use rand::Rng;
 
 #[derive(Debug)]
 struct Board {
-    turn: u32,
+    turn: usize,
     players: [Player; 2],
+    current_player: usize,
 }
 
 #[derive(Debug,Clone)]
 struct Player {
-    life: u32,
-    turn: u32,
-    mana: u32,
+    life: usize,
+    turn: usize,
+    mana: usize,
     domain: Domain,
 }
 
@@ -19,25 +20,36 @@ struct Player {
 struct Domain {
     library: Vec<Card>,
     hand: Vec<Card>,
-    field: Vec<Card>,
+    battlefield: Vec<Card>,
     graveyard: Vec<Card>,
 }
 
 #[derive(Debug,Clone)]
 struct Card {
-    id: u32,
+    id: usize,
     card_text: CardText
 }
 
 #[derive(Debug,Clone)]
 struct CardText {
     name: String,
-    cost: u32,
-    power: u32,
-    toughness: u32,
+    cost: usize,
+    power: usize,
+    toughness: usize,
+}
+
+impl Board {
+    fn cleanup(&mut self) {
+        self.turn = self.turn + 1;
+        self.current_player = 1 - self.current_player;
+    }
 }
 
 impl Player {
+    fn upkeep(&mut self) {
+        self.draw();
+        self.mana = self.turn;
+    }
     fn draw(&mut self) {
         let length = self.domain.library.len();
         if length>0 {
@@ -47,28 +59,33 @@ impl Player {
             println!("No card in your library.")
         }
     }
-    fn draw_cards(&mut self, n: u32) {
-        let max_n=self.domain.library.len().try_into().unwrap();
-        if 0<n && n<=max_n {
-            for i in 1..=n {
-                let card = self.domain.library.remove(0);
-                self.domain.hand.push(card);
-            }
-        } else if n>max_n {
-            for i in 1..=max_n {
-                let card = self.domain.library.remove(0);
-                self.domain.hand.push(card);
-            }
-        } else {
-            ();
-        }
+    fn cast(&mut self, hand_index: usize) {
+        let card = self.domain.hand.remove(hand_index);
+        self.mana = self.mana - card.card_text.cost;
+        self.domain.battlefield.push(card);
     }
+    // fn draw_cards(&mut self, n: usize) {
+    //     let max_n=self.domain.library.len().try_into().unwrap();
+    //     if 0<n && n<=max_n {
+    //         for i in 1..=n {
+    //             let card = self.domain.library.remove(0);
+    //             self.domain.hand.push(card);
+    //         }
+    //     } else if n>max_n {
+    //         for i in 1..=max_n {
+    //             let card = self.domain.library.remove(0);
+    //             self.domain.hand.push(card);
+    //         }
+    //     } else {
+    //         ();
+    //     }
+    // }
 }
 
 trait Agent {
-    fn get_cast_num(&self, board: &Board) -> u32;
+    fn get_cast_num(&self, board: &Board) -> usize;
     // fn draw_a_card(&self);
-    // fn draw(&mut self, n: u32) {
+    // fn draw(&mut self, n: usize) {
     //     let max_n=self.domain.library.len().try_into().unwrap();
     //     if 0<n && n<=max_n {
     //         for i in 1..=n {
@@ -89,16 +106,16 @@ trait Agent {
 #[derive(Debug, Clone, Copy)]
 struct Human;
 impl Agent for Human {
-    fn get_cast_num(&self, board: &Board) -> u32 {
+    fn get_cast_num(&self, board: &Board) -> usize {
         let mut input = String::new();
         println!("Choose a number to cast");
         io::stdin()
             .read_line(&mut input)
             .expect("Failed to read input");
-        let hand_number: u32 = input
+        let hand_number: usize = input
             .trim()
             .parse()
-            .expect("Failed to parse input as an u32");
+            .expect("Failed to parse input as an usize");
         hand_number
     }
 }
@@ -106,10 +123,10 @@ impl Agent for Human {
 #[derive(Debug, Clone, Copy)]
 struct RandomAgent;
 impl Agent for RandomAgent {
-    fn get_cast_num(&self, board: &Board) -> u32 {
+    fn get_cast_num(&self, board: &Board) -> usize {
         let mut rng = rand::thread_rng();
-        let random_u32 = rng.gen::<u32>();
-        random_u32
+        let random_usize = rng.gen_range(0..3);
+        random_usize
     }
 }
 
@@ -131,7 +148,7 @@ fn main() {
     let mut player1_deck: Vec<Card> = Vec::new();
     let mut player2_deck: Vec<Card> = Vec::new();
     for i in 1..=30 {
-        let j:u32 = i/3 + 1;
+        let j:usize = i/3 + 1;
         let c = Card {
             id: i,
             card_text: CardText {
@@ -160,11 +177,11 @@ fn main() {
         domain: Domain {
             library: player1_deck,
             hand: vec![],
-            field: vec![],
+            battlefield: vec![],
             graveyard: vec![],
         },
     };
-    let turn: u32 = 0;
+    let turn: usize = 0;
     let mut current_player: usize = 0;
     let agent0 = RandomAgent {};
     let agent1 = Human {};
@@ -172,22 +189,32 @@ fn main() {
     let mut board = Board {
         turn: turn,
         players: [player1.clone(), player1.clone()],
+        current_player: 0,
     };
     // println!("{:?}", board);
     loop {
-        for _i in 0..10 {
-            board.players[current_player].draw();
+        board.players[board.current_player].upkeep();
+        println!("{:?}", board.turn);
+        println!("{:?}", board.current_player);
+        for _i in 0..2 {
+            board.players[board.current_player].draw();
             // println!("a");
         }
-        current_player = 1 - current_player;
         // let current_agent: Box<dyn Agent> = match current_player {
         //     0 => Box::new(agent0),
         //     1 => Box::new(agent1.clone()),
         //     _ => panic!("Invalid value encountered!"),
         // };
-        let current_agent = &agents[current_player];
-        current_agent.get_cast_num(&board);
-        board.turn = board.turn + 1;
+        let current_agent = &agents[board.current_player];
+        println!("Player {} mana: {:?}", board.current_player, board.players[board.current_player].mana);
+        println!("{:?}", board.players[board.current_player].domain.hand);
+        let hand_index = current_agent.get_cast_num(&board);
+        println!("Cast hand-index {:?}", &hand_index);
+        board.players[board.current_player].cast(hand_index);
+        println!("{:?}", board.players[board.current_player].domain.battlefield);
+        println!("Player {} mana: {:?}", board.current_player, board.players[board.current_player].mana);
+        println!("{:?}", board.players[board.current_player].domain.hand);
+        board.cleanup();
         if board.turn>10 {
             break;
         }
