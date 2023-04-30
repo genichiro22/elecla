@@ -4,11 +4,10 @@ use rand::Rng;
 #[derive(Debug)]
 struct Board {
     turn: u32,
-    player1: Player,
-    player2: Player,
+    players: (Player, Player)
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 struct Player {
     life: u32,
     turn: u32,
@@ -16,7 +15,7 @@ struct Player {
     domain: Domain,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 struct Domain {
     library: Vec<Card>,
     hand: Vec<Card>,
@@ -24,13 +23,13 @@ struct Domain {
     graveyard: Vec<Card>,
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 struct Card {
     id: u32,
     card_text: CardText
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug,Clone)]
 struct CardText {
     name: String,
     cost: u32,
@@ -38,34 +37,29 @@ struct CardText {
     toughness: u32,
 }
 
-impl Player {
-    fn draw(&mut self, n: u32) {
-        let max_n=self.domain.library.len().try_into().unwrap();
-        if 0<n && n<=max_n {
-            for i in 1..=n {
-                let card = self.domain.library.remove(0);
-                self.domain.hand.push(card);
-            }
-        } else if n>max_n {
-            for i in 1..=max_n {
-                let card = self.domain.library.remove(0);
-                self.domain.hand.push(card);
-            }
-        } else {
-            ();
-        }
-    }
-}
-
 trait Agent {
     fn get_cast_num(&self) -> u32;
+    // fn draw_a_card(&self);
+    // fn draw(&mut self, n: u32) {
+    //     let max_n=self.domain.library.len().try_into().unwrap();
+    //     if 0<n && n<=max_n {
+    //         for i in 1..=n {
+    //             let card = self.domain.library.remove(0);
+    //             self.domain.hand.push(card);
+    //         }
+    //     } else if n>max_n {
+    //         for i in 1..=max_n {
+    //             let card = self.domain.library.remove(0);
+    //             self.domain.hand.push(card);
+    //         }
+    //     } else {
+    //         ();
+    //     }
+    // }
 }
 
-#[derive(Debug,Clone,Copy)]
-struct Human {
-    player: u32,
-}
-
+#[derive(Debug,Clone)]
+struct Human(Player);
 impl Agent for Human {
     fn get_cast_num(&self) -> u32 {
         let mut input = String::new();
@@ -81,10 +75,8 @@ impl Agent for Human {
     }
 }
 
-#[derive(Debug,Clone,Copy)]
-struct RandomAgent {
-    player: u32,
-}
+#[derive(Debug,Clone)]
+struct RandomAgent(Player);
 impl Agent for RandomAgent {
     fn get_cast_num(&self) -> u32 {
         let mut rng = rand::thread_rng();
@@ -144,21 +136,16 @@ fn main() {
             graveyard: vec![],
         },
     };
-    player1.draw(1);
     let mut turn: u32 = 0;
     let mut current_player: u32 = 1;
-    let agent1 = RandomAgent {
-        player: 1,
-    };
-    let agent2 = Human {
-        player: 2,
-    };
+    let agent1 = RandomAgent(player1.clone());
+    let agent2 = Human(player1.clone());
 
     loop {
         current_player = 3 - current_player;
         let agent: Box<dyn Agent> = match current_player {
-            1 => Box::new(agent1),
-            2 => Box::new(agent2),
+            1 => Box::new(agent1.clone()),
+            2 => Box::new(agent2.clone()),
             _ => panic!("Invalid value encountered!"),
         };
         agent.get_cast_num();
