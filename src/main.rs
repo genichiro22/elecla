@@ -4,7 +4,7 @@ use rand::Rng;
 #[derive(Debug)]
 struct Board {
     turn: u32,
-    players: (Player, Player)
+    players: [Player; 2],
 }
 
 #[derive(Debug,Clone)]
@@ -35,6 +35,34 @@ struct CardText {
     cost: u32,
     power: u32,
     toughness: u32,
+}
+
+impl Player {
+    fn draw(&mut self) {
+        let length = self.domain.library.len();
+        if length>0 {
+            let card = self.domain.library.remove(0);
+            self.domain.hand.push(card);    
+        } else {
+            println!("No card in your library.")
+        }
+    }
+    fn draw_cards(&mut self, n: u32) {
+        let max_n=self.domain.library.len().try_into().unwrap();
+        if 0<n && n<=max_n {
+            for i in 1..=n {
+                let card = self.domain.library.remove(0);
+                self.domain.hand.push(card);
+            }
+        } else if n>max_n {
+            for i in 1..=max_n {
+                let card = self.domain.library.remove(0);
+                self.domain.hand.push(card);
+            }
+        } else {
+            ();
+        }
+    }
 }
 
 trait Agent {
@@ -125,7 +153,7 @@ fn main() {
         player1_deck.push(c);
         player2_deck.push(d);
     }
-    let mut player1 = Player {
+    let player1 = Player {
         life: 13,
         turn: 3,
         mana: 5,
@@ -136,24 +164,31 @@ fn main() {
             graveyard: vec![],
         },
     };
-    let mut turn: u32 = 0;
-    let mut current_player: u32 = 1;
-    let agent1 = RandomAgent {};
-    let agent2 = Human {};
-    let board = Board {
-        turn: 0,
-        players: (player1.clone(), player1.clone()),
+    let turn: u32 = 0;
+    let mut current_player: usize = 0;
+    let agent0 = RandomAgent {};
+    let agent1 = Human {};
+    let agents: [Box<dyn Agent>; 2] = [Box::new(agent0), Box::new(agent1)];
+    let mut board = Board {
+        turn: turn,
+        players: [player1.clone(), player1.clone()],
     };
+    // println!("{:?}", board);
     loop {
-        current_player = 3 - current_player;
-        let agent: Box<dyn Agent> = match current_player {
-            1 => Box::new(agent1),
-            2 => Box::new(agent2.clone()),
-            _ => panic!("Invalid value encountered!"),
-        };
-        agent.get_cast_num(&board);
-        turn = turn + 1;
-        if turn>10 {
+        for _i in 0..10 {
+            board.players[current_player].draw();
+            // println!("a");
+        }
+        current_player = 1 - current_player;
+        // let current_agent: Box<dyn Agent> = match current_player {
+        //     0 => Box::new(agent0),
+        //     1 => Box::new(agent1.clone()),
+        //     _ => panic!("Invalid value encountered!"),
+        // };
+        let current_agent = &agents[current_player];
+        current_agent.get_cast_num(&board);
+        board.turn = board.turn + 1;
+        if board.turn>10 {
             break;
         }
     }
