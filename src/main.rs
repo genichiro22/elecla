@@ -38,7 +38,7 @@ struct CardText {
 }
 
 trait Agent {
-    fn get_cast_num(&self) -> u32;
+    fn get_cast_num(&self, board: &Board) -> u32;
     // fn draw_a_card(&self);
     // fn draw(&mut self, n: u32) {
     //     let max_n=self.domain.library.len().try_into().unwrap();
@@ -58,10 +58,10 @@ trait Agent {
     // }
 }
 
-#[derive(Debug,Clone)]
-struct Human(Player);
+#[derive(Debug, Clone, Copy)]
+struct Human;
 impl Agent for Human {
-    fn get_cast_num(&self) -> u32 {
+    fn get_cast_num(&self, board: &Board) -> u32 {
         let mut input = String::new();
         println!("Choose a number to cast");
         io::stdin()
@@ -75,10 +75,10 @@ impl Agent for Human {
     }
 }
 
-#[derive(Debug,Clone)]
-struct RandomAgent(Player);
+#[derive(Debug, Clone, Copy)]
+struct RandomAgent;
 impl Agent for RandomAgent {
-    fn get_cast_num(&self) -> u32 {
+    fn get_cast_num(&self, board: &Board) -> u32 {
         let mut rng = rand::thread_rng();
         let random_u32 = rng.gen::<u32>();
         random_u32
@@ -138,17 +138,20 @@ fn main() {
     };
     let mut turn: u32 = 0;
     let mut current_player: u32 = 1;
-    let agent1 = RandomAgent(player1.clone());
-    let agent2 = Human(player1.clone());
-
+    let agent1 = RandomAgent {};
+    let agent2 = Human {};
+    let board = Board {
+        turn: 0,
+        players: (player1.clone(), player1.clone()),
+    };
     loop {
         current_player = 3 - current_player;
         let agent: Box<dyn Agent> = match current_player {
-            1 => Box::new(agent1.clone()),
+            1 => Box::new(agent1),
             2 => Box::new(agent2.clone()),
             _ => panic!("Invalid value encountered!"),
         };
-        agent.get_cast_num();
+        agent.get_cast_num(&board);
         turn = turn + 1;
         if turn>10 {
             break;
