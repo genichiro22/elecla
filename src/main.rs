@@ -61,6 +61,7 @@ trait Agent {
     fn get_cast_num(&self) -> u32;
 }
 
+#[derive(Debug,Clone,Copy)]
 struct Human {
     player: u32,
 }
@@ -149,17 +150,18 @@ fn main() {
     let agent1 = RandomAgent {
         player: 1,
     };
-    let agent2 = RandomAgent {
+    let agent2 = Human {
         player: 2,
     };
 
     loop {
-        current_player = 2 - current_player;
-        let agent = match current_player {
-            1 => agent1,
-            2 => agent2,
+        current_player = 3 - current_player;
+        let agent: Box<dyn Agent> = match current_player {
+            1 => Box::new(agent1),
+            2 => Box::new(agent2),
             _ => panic!("Invalid value encountered!"),
         };
+        agent.get_cast_num();
         turn = turn + 1;
         if turn>10 {
             break;
