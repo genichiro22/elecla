@@ -1,5 +1,7 @@
 use std::io;
 use rand::Rng;
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 
 #[derive(Debug)]
 struct Board {
@@ -42,6 +44,23 @@ impl Board {
     fn cleanup(&mut self) {
         self.turn = self.turn + 1;
         self.current_player = 1 - self.current_player;
+    }
+    fn render(&mut self) {
+        println!("*** TURN {}, PLAYER {} ***", self.turn, self.current_player);
+        println!("Opponent's Battlefield:");
+        for (i,value) in self.players[1-self.current_player].domain.battlefield.iter().enumerate() {
+            println!("    Index {}: <<{}>>", i, value.card_text.name);
+        }
+        println!("Your Battlefield:");
+        for (i,value) in self.players[self.current_player].domain.battlefield.iter().enumerate() {
+            println!("    Index {}: <<{}>>", i, value.card_text.name);
+        }
+        println!("Your hand:");
+        for (i,value) in self.players[self.current_player].domain.hand.iter().enumerate() {
+            println!("    Index {}: ({}) <<{}>>", i, value.card_text.cost, value.card_text.name);
+        }
+        println!("Your mana: {}/{}", self.players[self.current_player].mana, self.players[self.current_player].turn);
+        println!("************************");
     }
 }
 
@@ -108,7 +127,7 @@ struct Human;
 impl Agent for Human {
     fn get_cast_num(&self, board: &Board) -> usize {
         let mut input = String::new();
-        println!("Choose a number to cast");
+        println!("Choose a index to cast");
         io::stdin()
             .read_line(&mut input)
             .expect("Failed to read input");
@@ -152,7 +171,7 @@ fn main() {
         let c = Card {
             id: i,
             card_text: CardText {
-                name: format!("Sample {}", j),
+                name: format!("Sample Card {} A", j),
                 cost: j,
                 power: j,
                 toughness: j,
@@ -161,7 +180,7 @@ fn main() {
         let d = Card {
             id: i,
             card_text: CardText {
-                name: format!("PL2 {}", j),
+                name: format!("Sample Card {} B", j),
                 cost: j+1,
                 power: j,
                 toughness: j,
@@ -170,6 +189,8 @@ fn main() {
         player1_deck.push(c);
         player2_deck.push(d);
     }
+    let mut rng = thread_rng();
+    player1_deck.shuffle(&mut rng);
     let player1 = Player {
         life: 13,
         turn: 3,
@@ -194,26 +215,21 @@ fn main() {
     // println!("{:?}", board);
     loop {
         board.players[board.current_player].upkeep();
+        board.render();
         println!("{:?}", board.turn);
         println!("{:?}", board.current_player);
         for _i in 0..2 {
             board.players[board.current_player].draw();
-            // println!("a");
         }
-        // let current_agent: Box<dyn Agent> = match current_player {
-        //     0 => Box::new(agent0),
-        //     1 => Box::new(agent1.clone()),
-        //     _ => panic!("Invalid value encountered!"),
-        // };
         let current_agent = &agents[board.current_player];
-        println!("Player {} mana: {:?}", board.current_player, board.players[board.current_player].mana);
-        println!("{:?}", board.players[board.current_player].domain.hand);
+        // println!("Player {} mana: {:?}", board.current_player, board.players[board.current_player].mana);
+        // println!("{:?}", board.players[board.current_player].domain.hand);
         let hand_index = current_agent.get_cast_num(&board);
-        println!("Cast hand-index {:?}", &hand_index);
+        // println!("Cast hand-index {:?}", &hand_index);
         board.players[board.current_player].cast(hand_index);
-        println!("{:?}", board.players[board.current_player].domain.battlefield);
-        println!("Player {} mana: {:?}", board.current_player, board.players[board.current_player].mana);
-        println!("{:?}", board.players[board.current_player].domain.hand);
+        // println!("{:?}", board.players[board.current_player].domain.battlefield);
+        // println!("Player {} mana: {:?}", board.current_player, board.players[board.current_player].mana);
+        // println!("{:?}", board.players[board.current_player].domain.hand);
         board.cleanup();
         if board.turn>10 {
             break;
