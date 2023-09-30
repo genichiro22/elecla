@@ -40,6 +40,24 @@ struct CardText {
     toughness: usize,
 }
 
+#[derive(Debug, Clone)]
+struct Action {
+    requirement: Requirement,
+    effect: Effect,
+}
+
+#[derive(Debug, Clone)]
+struct Requirement {
+    cost: usize,
+}
+
+#[derive(Debug, Clone)]
+enum Effect {
+    Draw,
+    Damage,
+    Movement,
+}
+
 impl Board {
     fn cleanup(&mut self) {
         self.turn = self.turn + 1;
